@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catálogo de Peças</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== LOGIN ===== -->
+  <div id="login">
+    <h1>Login</h1>
+    <input type="text" id="usuario" placeholder="Usuário">
+    <input type="password" id="senha" placeholder="Senha">
+    <button onclick="entrar()">Entrar</button>
+    <p>Ainda não tem conta? <a href="#" onclick="mostrarCadastro()">Cadastrar</a></p>
+  </div>
+
+  <!-- ===== CADASTRO ===== -->
+  <div id="cadastro" style="display:none;">
+    <h1>Cadastrar Novo Usuário</h1>
+    <input type="text" id="novoUsuario" placeholder="Novo usuário">
+    <input type="password" id="novaSenha" placeholder="Nova senha">
+    <button onclick="cadastrar()">Salvar</button>
+    <p>Já tem conta? <a href="#" onclick="mostrarLogin()">Voltar ao login</a></p>
+  </div>
+
+  <!-- ===== CONTEÚDO PRINCIPAL ===== -->
+  <div id="conteudo" style="display:none;">
+    <h1>CADASTRAR PEÇAS</h1>
+
+    <div class="form-container">
+      <label for="codigo">Código da Peça:</label>
+      <input type="text" id="codigo" placeholder="Digite o código">
+      
+      <label for="descricao">Descrição:</label>
+      <textarea id="descricao" placeholder="Descreva o produto"></textarea>
+      
+      <label for="arquivo">Escolha fotos ou vídeos:</label>
+      <input type="file" id="arquivo" accept="image/*,video/*" multiple>
+      
+      <button id="enviar">Cadastrar Produto</button>
+    </div>
+
+    <h2 class="galeria-titulo">GALERIA</h2>
+    <div id="galeria"></div>
+
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span class="fechar">&times;</span>
+        <span class="seta esquerda">&#10094;</span>
+        <span class="seta direita">&#10095;</span>
+        <div class="descricao-modal"></div>
+        <div class="indicadores"></div>
+      </div>
+    </div>
+
+    <button id="sair" onclick="sair()">Sair</button>
+  </div>
+
+  <!-- ===== SCRIPT DE LOGIN/CADASTRO ===== -->
+  <script>
+    function mostrarCadastro() {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("cadastro").style.display = "block";
+    }
+
+    function mostrarLogin() {
+      document.getElementById("cadastro").style.display = "none";
+      document.getElementById("login").style.display = "block";
+    }
+
+    function cadastrar() {
+      const novoUser = document.getElementById("novoUsuario").value;
+      const novaSenha = document.getElementById("novaSenha").value;
+
+      if (novoUser && novaSenha) {
+        localStorage.setItem("usuario", novoUser);
+        localStorage.setItem("senha", novaSenha);
+        alert("Usuário cadastrado com sucesso!");
+        mostrarLogin();
+      } else {
+        alert("Preencha todos os campos!");
+      }
+    }
+
+    function entrar() {
+      const user = document.getElementById("usuario").value;
+      const senha = document.getElementById("senha").value;
+      const userSalvo = localStorage.getItem("usuario");
+      const senhaSalva = localStorage.getItem("senha");
+
+      if (user === userSalvo && senha === senhaSalva) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("conteudo").style.display = "block";
+      } else {
+        alert("Usuário ou senha incorretos!");
+      }
+    }
+
+    function sair() {
+      document.getElementById("conteudo").style.display = "none";
+      document.getElementById("login").style.display = "block";
+      document.getElementById("usuario").value = "";
+      document.getElementById("senha").value = "";
+    }
+  </script>
+
+  <script src="script.js"></script>
+</body>
+</html>
