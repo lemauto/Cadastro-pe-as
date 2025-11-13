@@ -1,417 +1,192 @@
-/* ===== ESTILO GERAL ===== */
-body{
-  color: rgb(0, 0, 0);
-  background-image:
-    linear-gradient(to right, rgba(135, 88, 2, 0.858), rgba(249, 196, 20, 0.922)),
-    url('img/esfera modas logo editado.jpg');
-  background-repeat: no-repeat, no-repeat;
-  background-size: cover, 18%;
-  background-position: left top;
-  background-attachment: fixed, fixed;
-  margin: 0;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+// =========================
+// LOGIN E CADASTRO
+// =========================
+
+function mostrarCadastro() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("cadastro").style.display = "block";
 }
 
-/* ===== TÍTULOS ===== */
-h1 {
-  font-family: 'Montserrat', 'Poppins', 'Segoe UI', sans-serif;
-  text-align: center;
-  margin-bottom: 25px;
-  font-size: 85px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #1a1a1a; /* preto suave */
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+function mostrarLogin() {
+  document.getElementById("cadastro").style.display = "none";
+  document.getElementById("login").style.display = "block";
 }
 
-h2.galeria-titulo {
-  font-family: 'Poppins', sans-serif;
-  text-align: center;
-  margin-bottom: 15px;
-  font-size: 55px;
-  color: white;
-  letter-spacing: 0.5px;
+function cadastrar() {
+  const novoUser = document.getElementById("novoUsuario").value;
+  const novaSenha = document.getElementById("novaSenha").value;
+
+  if (novoUser && novaSenha) {
+    localStorage.setItem("usuario", novoUser);
+    localStorage.setItem("senha", novaSenha);
+    alert("Usuário cadastrado com sucesso!");
+    mostrarLogin();
+  } else {
+    alert("Preencha todos os campos!");
+  }
 }
 
-/* ===== FORMULÁRIO DE CADASTRO ===== */
-.form-container {
-  background: rgb(255, 255, 255);
-  padding: 25px;
-  border-radius: 15px;
-  max-width: 400px;
-  margin: 0 auto 25px auto;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-.form-container:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+function entrar() {
+  const user = document.getElementById("usuario").value;
+  const senha = document.getElementById("senha").value;
+  const userSalvo = localStorage.getItem("usuario");
+  const senhaSalva = localStorage.getItem("senha");
+
+  if (user === userSalvo && senha === senhaSalva) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("conteudo").style.display = "block";
+    carregarGaleria();
+  } else {
+    alert("Usuário ou senha incorretos!");
+  }
 }
 
-.form-container label {
-  display: block;
-  margin-top: 12px;
-  font-weight: 600;
-  font-size: 14px;
+function sair() {
+  document.getElementById("conteudo").style.display = "none";
+  document.getElementById("login").style.display = "block";
+  document.getElementById("usuario").value = "";
+  document.getElementById("senha").value = "";
 }
 
-.form-container input[type="text"],
-.form-container input[type="file"],
-.form-container textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  box-sizing: border-box;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: border-color 0.3s;
-}
-.form-container input:focus,
-.form-container textarea:focus {
-  border-color: #007bff;
-  outline: none;
+// =========================
+// CADASTRO DE PEÇAS
+// =========================
+
+document.getElementById('enviar').addEventListener('click', () => {
+  const arquivoInput = document.getElementById('arquivo');
+  const codigoInput = document.getElementById('codigo');
+  const descricaoInput = document.getElementById('descricao');
+  const galeria = document.getElementById('galeria');
+
+  const arquivos = Array.from(arquivoInput.files);
+  const codigo = codigoInput.value.trim();
+  const descricao = descricaoInput.value.trim();
+
+  if (!codigo) return alert('Digite o código da peça!');
+  if (arquivos.length === 0) return alert('Escolha pelo menos uma foto ou vídeo!');
+
+  const medias = [];
+  let carregadas = 0;
+
+  arquivos.forEach(arquivo => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      medias.push({
+        url: e.target.result,
+        type: arquivo.type.startsWith('image') ? 'image' : 'video'
+      });
+      carregadas++;
+
+      if (carregadas === arquivos.length) {
+        const card = criarCard(codigo, descricao, medias);
+        galeria.appendChild(card);
+        salvarNoLocalStorage(codigo, descricao, medias);
+      }
+    };
+    reader.readAsDataURL(arquivo);
+  });
+
+  codigoInput.value = '';
+  descricaoInput.value = '';
+  arquivoInput.value = '';
+});
+
+// =========================
+// FUNÇÕES DOS CARDS
+// =========================
+
+function criarCard(codigo, descricao, medias) {
+  const container = document.createElement('div');
+  container.className = 'card';
+
+  // Imagem de capa
+  const capa = document.createElement('img');
+  capa.src = medias[0].url;
+  container.appendChild(capa);
+
+  // Código
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = codigo;
+  container.appendChild(label);
+
+  // Descrição
+  const descricaoBox = document.createElement('div');
+  descricaoBox.className = 'descricao';
+  descricaoBox.textContent = descricao;
+  container.appendChild(descricaoBox);
+
+  // Botões
+  const botoes = document.createElement('div');
+  botoes.className = 'botoes';
+
+  const btnEditar = document.createElement('button');
+  btnEditar.textContent = 'Editar';
+  btnEditar.onclick = () => editarCard(container, codigo, descricao);
+  botoes.appendChild(btnEditar);
+
+  const btnExcluir = document.createElement('button');
+  btnExcluir.textContent = 'Excluir';
+  btnExcluir.onclick = () => {
+    container.remove();
+    removerDoLocalStorage(codigo);
+  };
+  botoes.appendChild(btnExcluir);
+
+  container.appendChild(botoes);
+
+  return container;
 }
 
-.form-container button {
-  margin-top: 15px;
-  padding: 12px;
-  width: 100%;
-  background-color: #dcb91e;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: background 0.3s, transform 0.2s;
-}
-.form-container button:hover {
-  background-color: #a06405;
-  transform: translateY(-2px);
+function salvarNoLocalStorage(codigo, descricao, medias) {
+  const pecas = JSON.parse(localStorage.getItem('pecas') || '[]');
+  pecas.push({ codigo, descricao, medias });
+  localStorage.setItem('pecas', JSON.stringify(pecas));
 }
 
-/* ===== GALERIA ===== */
-#galeria {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
+function removerDoLocalStorage(codigo) {
+  const pecas = JSON.parse(localStorage.getItem('pecas') || '[]');
+  const novas = pecas.filter(p => p.codigo !== codigo);
+  localStorage.setItem('pecas', JSON.stringify(novas));
 }
 
-/* ===== CARD ===== */
-.card {
-  position: relative;
-  flex: 1 1 220px;
-  max-width: 220px;
-  min-width: 180px;
-  background: #fefdfb;
-  border-radius: 15px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-}
-.card:hover {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+// =========================
+// EDIÇÃO
+// =========================
+
+function editarCard(container, codigoAntigo, descricaoAntiga) {
+  const novoCodigo = prompt("Editar código:", codigoAntigo);
+  const novaDescricao = prompt("Editar descrição:", descricaoAntiga);
+
+  if (!novoCodigo || !novaDescricao) return;
+
+  // Atualiza na tela
+  container.querySelector('.label').textContent = novoCodigo;
+  container.querySelector('.descricao').textContent = novaDescricao;
+
+  // Atualiza no localStorage
+  const pecas = JSON.parse(localStorage.getItem('pecas') || '[]');
+  const index = pecas.findIndex(p => p.codigo === codigoAntigo);
+
+  if (index !== -1) {
+    pecas[index].codigo = novoCodigo;
+    pecas[index].descricao = novaDescricao;
+    localStorage.setItem('pecas', JSON.stringify(pecas));
+  }
 }
 
-.card img, .card video {
-  width: 100%;
-  height: auto;
-  max-height: 220px;
-  object-fit: contain;
-  background-color: rgba(255, 255, 255, 0.922);
-  border-bottom: 1px solid #ddd;
-  display: block;
-}
+// =========================
+// CARREGAR GALERIA AO ENTRAR
+// =========================
 
-/* ===== DESCRIÇÃO DO CARD ===== */
-.descricao {
-  padding: 12px;
-  font-size: 14px;
-  color: #333;
-  min-height: 45px;
-  flex-grow: 1;
-  text-align: center;
-  font-weight: 600;
-}
+function carregarGaleria() {
+  const galeria = document.getElementById('galeria');
+  galeria.innerHTML = "";
 
-/* ===== LABEL ===== */
-.label {
-  background: #f3f4f5;
-  color: #060606;
-  padding: 6px;
-  font-weight: 600;
-  text-align: center;
-}
+  const pecas = JSON.parse(localStorage.getItem('pecas') || '[]');
 
-/* ===== BOTÕES DOS CARDS ===== */
-.botoes {
-  display: flex;
-  justify-content: space-around;
-  padding: 10px;
-  border-top: 1px solid #ddd;
-}
-.botoes button {
-  border: none;
-  background: #e8a703;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s, transform 0.2s;
-}
-.botoes button:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
-}
-
-/* ===== CAIXA DE EDIÇÃO INLINE ===== */
-.editar-box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: #eef4ff;
-  border-top: 1px solid #ccc;
-  padding: 12px;
-  border-radius: 10px;
-}
-
-.editar-box input, .editar-box textarea {
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: border-color 0.3s;
-}
-.editar-box input:focus,
-.editar-box textarea:focus {
-  border-color: #d7b407;
-  outline: none;
-}
-
-.editar-box button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.3s;
-}
-.editar-box button:first-child {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: white;
-}
-.editar-box button:first-child:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  transform: scale(1.05);
-}
-.editar-box button:last-child {
-  background: linear-gradient(135deg, #9ca3af, #6b7280);
-  color: white;
-}
-.editar-box button:last-child:hover {
-  background: linear-gradient(135deg, #6b7280, #4b5563);
-  transform: scale(1.05);
-}
-
-/* ===== MODAL ===== */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  flex-direction: column;
-  padding: 20px;
-}
-
-.modal-content {
-  max-width: 80%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-radius: 15px;
-}
-
-.modal-content img,
-.modal-content video {
-  width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
-  border-radius: 15px;
-  display: none;
-  background-color: #000;
-}
-
-/* ===== BOTÃO FECHAR ===== */
-.fechar {
-  position: absolute;
-  top: 8px; right: 8px;
-  color: white;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-  user-select: none;
-  background: rgba(0,0,0,0.5);
-  border-radius: 50%;
-  width: 35px; height: 35px;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 2000;
-  transition: background 0.3s, transform 0.2s;
-}
-.fechar:hover {
-  background: rgba(255,0,0,0.7);
-  transform: scale(1.1);
-}
-
-/* ===== SETAS ===== */
-.seta {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  color: white;
-  font-size: 40px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.2s;
-}
-.seta:hover { transform: translateY(-50%) scale(1.1); }
-
-.seta.esquerda { left: -50px; }
-.seta.direita { right: -50px; }
-
-.descricao-modal {
-  color: white;
-  margin-top: 15px;
-  text-align: center;
-  max-width: 600px;
-}
-
-/* ===== INDICADORES ===== */
-.indicadores {
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
-  gap: 8px;
-}
-.indicador {
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background-color: #ccc;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-}
-.indicador.ativo {
-  background-color: #28a745;
-  transform: scale(1.2);
-}
-
-/* ===== LOGIN E CADASTRO ===== */
-#login,
-#cadastro {
-  background: rgba(255, 255, 255, 0.95);
-  width: 400px;
-  margin: 100px auto;
-  padding: 30px 25px;
-  border-radius: 15px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  text-align: center;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-#login:hover,
-#cadastro:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.2);
-}
-
-#login h1,
-#cadastro h1 {
-  font-family: 'Montserrat', 'Poppins', sans-serif;
-  font-size: 50px;
-  font-weight: 800;
-  color: #1a1a1a;
-  margin-bottom: 25px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.4);
-}
-
-#login input,
-#cadastro input {
-  width: 90%;
-  padding: 12px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 16px;
-  box-sizing: border-box;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-#login input:focus,
-#cadastro input:focus {
-  border-color: #dcb91e;
-  box-shadow: 0 0 6px rgba(249, 196, 20, 0.5);
-  outline: none;
-}
-
-#login button,
-#cadastro button {
-  width: 95%;
-  padding: 12px;
-  background-color: #dcb91e;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-#login button:hover,
-#cadastro button:hover {
-  background-color: #a06405;
-  transform: translateY(-2px);
-}
-
-#login p,
-#cadastro p {
-  margin-top: 15px;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-#login a,
-#cadastro a {
-  color: #a06405;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-#login a:hover,
-#cadastro a:hover {
-  color: #dcb91e;
-  text-decoration: underline;
-}
-
-/* ===== RESPONSIVO ===== */
-@media (max-width: 600px) {
-  .card { flex: 1 1 150px; max-width: 150px; }
-  .card img, .card video { max-height: 150px; }
-  .seta { font-size: 30px; }
-  .fechar { width: 30px; height: 30px; font-size: 22px; top: 5px; right: 5px; }
-  #login, #cadastro { width: 90%; margin-top: 60px; }
+  pecas.forEach(p => {
+    const card = criarCard(p.codigo, p.descricao, p.medias);
+    galeria.appendChild(card);
+  });
 }
