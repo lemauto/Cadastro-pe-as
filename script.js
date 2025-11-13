@@ -1,101 +1,276 @@
-// ====== LOGIN / CADASTRO ======
+// script.js — versão corrigida e robusta
+window.addEventListener('DOMContentLoaded', () => {
+  // ===== HELPERS =====
+  const qs = id => document.getElementById(id);
+  const safeParse = (k, fallback) => {
+    try { return JSON.parse(localStorage.getItem(k) || 'null') ?? fallback; }
+    catch (e) { console.error('Erro parse localStorage', e); return fallback; }
+  };
 
-// Mostrar a tela de cadastro
-function mostrarCadastro() {
-  document.getElementById("login").style.display = "none";
-  document.getElementById("cadastro").style.display = "block";
-}
+  // ===== LOGIN / CADASTRO =====
+  window.mostrarCadastro = function() {
+    qs('login')?.style.display = 'none';
+    qs('cadastro')?.style.display = 'block';
+  };
 
-// Mostrar a tela de login
-function mostrarLogin() {
-  document.getElementById("cadastro").style.display = "none";
-  document.getElementById("login").style.display = "block";
-}
+  window.mostrarLogin = function() {
+    qs('cadastro')?.style.display = 'none';
+    qs('login')?.style.display = 'block';
+  };
 
-// Cadastrar novo usuário
-function cadastrar() {
-  const novoUser = document.getElementById("novoUsuario").value.trim();
-  const novaSenha = document.getElementById("novaSenha").value.trim();
+  window.cadastrar = function() {
+    const novoUser = (qs('novoUsuario')?.value || '').trim();
+    const novaSenha = (qs('novaSenha')?.value || '').trim();
 
-  if (novoUser && novaSenha) {
-    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-
-    if (usuarios.find(u => u.nome === novoUser)) {
-      alert("Usuário já existe!");
+    if (!novoUser || !novaSenha) {
+      alert('Preencha todos os campos!');
       return;
     }
 
-    usuarios.push({ nome: novoUser, senha: novaSenha });
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    localStorage.setItem('usuario', novoUser);
+    localStorage.setItem('senha', novaSenha);
+    alert('Usuário cadastrado com sucesso!');
+    window.mostrarLogin();
+  };
 
-    alert("Usuário cadastrado com sucesso!");
-    mostrarLogin();
-  } else {
-    alert("Preencha todos os campos!");
-  }
-}
+  window.entrar = function() {
+    const user = (qs('usuario')?.value || '').trim();
+    const senha = (qs('senha')?.value || '').trim();
+    const userSalvo = localStorage.getItem('usuario');
+    const senhaSalva = localStorage.getItem('senha');
 
-// Login
-function entrar() {
-  const user = document.getElementById("usuario").value.trim();
-  const senha = document.getElementById("senha").value.trim();
-  const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-  const usuarioValido = usuarios.find(u => u.nome === user && u.senha === senha);
+    if (user === userSalvo && senha === senhaSalva) {
+      qs('login') && (qs('login').style.display = 'none');
+      qs('conteudo') && (qs('conteudo').style.display = 'block');
+      carregarGaleria();
+    } else {
+      alert('Usuário ou senha incorretos!');
+    }
+  };
 
-  if (usuarioValido) {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("conteudo").style.display = "block";
-  } else {
-    alert("Usuário ou senha incorretos!");
-  }
-}
+  window.sair = function() {
+    qs('conteudo') && (qs('conteudo').style.display = 'none');
+    qs('login') && (qs('login').style.display = 'block');
+    if (qs('usuario')) qs('usuario').value = '';
+    if (qs('senha')) qs('senha').value = '';
+  };
 
-// Logout
-function sair() {
-  document.getElementById("conteudo").style.display = "none";
-  document.getElementById("login").style.display = "block";
-  document.getElementById("usuario").value = "";
-  document.getElementById("senha").value = "";
-}
-
-// ====== GALERIA (opcional - se já tinha) ======
-// Aqui você pode manter o código que já existia no seu script.js original
-// Exemplo de base:
-document.getElementById("enviar")?.addEventListener("click", () => {
-  const codigo = document.getElementById("codigo").value.trim();
-  const descricao = document.getElementById("descricao").value.trim();
-  const arquivos = document.getElementById("arquivo").files;
-  const galeria = document.getElementById("galeria");
-
-  if (!codigo || !descricao || arquivos.length === 0) {
-    alert("Preencha todos os campos e adicione pelo menos um arquivo.");
-    return;
+  // ===== STORAGE DE PEÇAS =====
+  function lerPecas() {
+    return safeParse('pecas', []);
   }
 
-  for (let file of arquivos) {
-    const card = document.createElement("div");
-    card.classList.add("card");
+  function salvarPecas(pecas) {
+    localStorage.setItem('pecas', JSON.stringify(pecas));
+  }
 
-    if (file.type.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      card.appendChild(img);
-    } else if (file.type.startsWith("video/")) {
-      const video = document.createElement("video");
-      video.src = URL.createObjectURL(file);
-      video.controls = true;
-      card.appendChild(video);
+  // ===== CRIAÇÃO / EDIÇÃO / EXCLUSÃO =====
+  function criarCardDOM(p) {
+    const container = document.createElement('div');
+    container.className = 'card';
+
+    // Capa (imagem ou vídeo)
+    if (p.medias && p.medias.length) {
+      const m0 = p.medias[0];
+      if (m0.type === 'image') {
+        const img = document.createElement('img');
+        img.src = m0.url;
+        img.alt = p.codigo;
+        container.appendChild(img);
+      } else {
+        const vid = document.createElement('video');
+        vid.src = m0.url;
+        vid.controls = true;
+        container.appendChild(vid);
+      }
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.style.minHeight = '120px';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.textContent = 'Sem imagem';
+      container.appendChild(placeholder);
     }
 
-    const desc = document.createElement("p");
-    desc.textContent = `${codigo} - ${descricao}`;
-    card.appendChild(desc);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = p.codigo;
+    container.appendChild(label);
 
-    galeria.appendChild(card);
+    const descricaoBox = document.createElement('div');
+    descricaoBox.className = 'descricao';
+    descricaoBox.textContent = p.descricao;
+    container.appendChild(descricaoBox);
+
+    const botoes = document.createElement('div');
+    botoes.className = 'botoes';
+
+    const btnEditar = document.createElement('button');
+    btnEditar.textContent = '✏️ Editar';
+    btnEditar.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      editarCard(p.codigo);
+    });
+    botoes.appendChild(btnEditar);
+
+    const btnExcluir = document.createElement('button');
+    btnExcluir.textContent = '🗑️ Excluir';
+    btnExcluir.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (!confirm('Deseja realmente excluir este item?')) return;
+      excluirCard(p.codigo);
+    });
+    botoes.appendChild(btnExcluir);
+
+    container.appendChild(botoes);
+
+    return container;
   }
 
-  document.getElementById("codigo").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("arquivo").value = "";
+  function atualizarOuInserirPeca(novaPeca) {
+    const pecas = lerPecas();
+    const idx = pecas.findIndex(x => x.codigo === novaPeca.codigo);
+    if (idx !== -1) {
+      // atualiza (preserva medias se não vier)
+      pecas[idx] = { ...pecas[idx], ...novaPeca };
+    } else {
+      pecas.push(novaPeca);
+    }
+    salvarPecas(pecas);
+  }
+
+  function excluirCard(codigo) {
+    let pecas = lerPecas();
+    const novas = pecas.filter(p => p.codigo !== codigo);
+    salvarPecas(novas);
+    carregarGaleria();
+  }
+
+  function editarCard(codigoAntigo) {
+    const pecas = lerPecas();
+    const idx = pecas.findIndex(p => p.codigo === codigoAntigo);
+    if (idx === -1) {
+      alert('Peça não encontrada para editar.');
+      return;
+    }
+    const p = pecas[idx];
+    const novoCodigo = prompt('Editar código:', p.codigo);
+    if (novoCodigo === null) return; // cancelou
+    const novaDescricao = prompt('Editar descrição:', p.descricao);
+    if (novaDescricao === null) return; // cancelou
+
+    // Previne código vazio
+    if (!novoCodigo.trim() || !novaDescricao.trim()) {
+      alert('Código e descrição não podem ser vazios.');
+      return;
+    }
+
+    // Se o novo código já existe em outro item -> perguntar se quer sobrescrever
+    const existeOutro = pecas.find((x, i) => x.codigo === novoCodigo && i !== idx);
+    if (existeOutro) {
+      if (!confirm('Já existe uma peça com esse código. Deseja sobrescrever?')) return;
+      // remover o outro
+      pecas = pecas.filter((x, i) => !(x.codigo === novoCodigo && i !== idx));
+    }
+
+    // Atualiza o item (preservando medias)
+    pecas[idx].codigo = novoCodigo;
+    pecas[idx].descricao = novaDescricao;
+    salvarPecas(pecas);
+    carregarGaleria();
+  }
+
+  // ===== CADASTRO DE NOVAS PEÇAS (upload local via FileReader) =====
+  const enviarBtn = qs('enviar');
+  if (enviarBtn) {
+    enviarBtn.addEventListener('click', (ev) => {
+      ev.preventDefault && ev.preventDefault();
+
+      const arquivoInput = qs('arquivo');
+      const codigoInput = qs('codigo');
+      const descricaoInput = qs('descricao');
+      const galeria = qs('galeria');
+
+      if (!arquivoInput || !codigoInput || !descricaoInput || !galeria) {
+        console.error('Elementos necessários não encontrados no DOM.');
+        alert('Erro: elementos da página faltando. Verifique o HTML.');
+        return;
+      }
+
+      const arquivos = Array.from(arquivoInput.files || []);
+      const codigo = (codigoInput.value || '').trim();
+      const descricao = (descricaoInput.value || '').trim();
+
+      if (!codigo) {
+        alert('Digite o código da peça!');
+        return;
+      }
+      if (arquivos.length === 0) {
+        alert('Escolha pelo menos uma foto ou vídeo!');
+        return;
+      }
+
+      // Ler todos os arquivos e criar objeto medias
+      const medias = [];
+      let carregadas = 0;
+
+      arquivos.forEach((arquivo) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          medias.push({
+            url: e.target.result,
+            type: arquivo.type.startsWith('image') ? 'image' : 'video'
+          });
+          carregadas++;
+          if (carregadas === arquivos.length) {
+            // Atualiza/insere no localStorage sem duplicar
+            atualizarOuInserirPeca({ codigo, descricao, medias });
+            // Atualiza DOM (recarrega galeria inteira para evitar duplicatas visuais)
+            carregarGaleria();
+            // limpa inputs
+            codigoInput.value = '';
+            descricaoInput.value = '';
+            arquivoInput.value = '';
+          }
+        };
+        reader.onerror = (err) => {
+          console.error('Erro ao ler arquivo:', err);
+        };
+        reader.readAsDataURL(arquivo);
+      });
+    });
+  } else {
+    console.warn('Botão enviar não encontrado (id="enviar").');
+  }
+
+  // ===== CARREGAR GALERIA =====
+  window.carregarGaleria = function() {
+    const galeria = qs('galeria');
+    if (!galeria) return;
+    galeria.innerHTML = '';
+    const pecas = lerPecas();
+    pecas.forEach(p => {
+      const dom = criarCardDOM(p);
+      galeria.appendChild(dom);
+    });
+  };
+
+  // Se estiver logado por localStorage (opcional), podemos auto-entrar
+  // (Se preferir não, comente as linhas abaixo)
+  const usuarioLogado = localStorage.getItem('usuarioLogado');
+  if (usuarioLogado) {
+    if (qs('login')) qs('login').style.display = 'none';
+    if (qs('conteudo')) {
+      qs('conteudo').style.display = 'block';
+      carregarGaleria();
+    }
+  }
+
+  // Expor funções no window (compatibilidade com chamadas inline do HTML)
+  window.carregarGaleria = window.carregarGaleria;
+  window.excluirCard = excluirCard;
+  window.editarCard = editarCard;
 });
+
 
