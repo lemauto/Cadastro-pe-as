@@ -59,54 +59,8 @@
     <button id="sair" onclick="sair()">Sair</button>
   </div>
 
-  <!-- ===== SCRIPT DE LOGIN/CADASTRO ===== -->
-  <script>
-    function mostrarCadastro() {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("cadastro").style.display = "block";
-    }
-
-    function mostrarLogin() {
-      document.getElementById("cadastro").style.display = "none";
-      document.getElementById("login").style.display = "block";
-    }
-
-    function cadastrar() {
-      const novoUser = document.getElementById("novoUsuario").value;
-      const novaSenha = document.getElementById("novaSenha").value;
-
-      if (novoUser && novaSenha) {
-        localStorage.setItem("usuario", novoUser);
-        localStorage.setItem("senha", novaSenha);
-        alert("Usuário cadastrado com sucesso!");
-        mostrarLogin();
-      } else {
-        alert("Preencha todos os campos!");
-      }
-    }
-
-    function entrar() {
-      const user = document.getElementById("usuario").value;
-      const senha = document.getElementById("senha").value;
-      const userSalvo = localStorage.getItem("usuario");
-      const senhaSalva = localStorage.getItem("senha");
-
-      if (user === userSalvo && senha === senhaSalva) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("conteudo").style.display = "block";
-      } else {
-        alert("Usuário ou senha incorretos!");
-      }
-    }
-
-    function sair() {
-      document.getElementById("conteudo").style.display = "none";
-      document.getElementById("login").style.display = "block";
-      document.getElementById("usuario").value = "";
-      document.getElementById("senha").value = "";
-    }
-  </script>
-
+  <!-- ===== JS EXTERNO ===== -->
   <script src="script.js"></script>
 </body>
 </html>
+
